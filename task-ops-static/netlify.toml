@@ -1,0 +1,4 @@
+# 静态站点：无需构建，直接发布当前目录
+[build]
+  publish = "."
+  command = "echo 'static'"

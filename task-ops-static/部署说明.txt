@@ -1,0 +1,49 @@
+Work Graph OS / 企业任务系统 — 静态部署（任何人用浏览器打开链接即可使用）
+================================================================================
+
+本目录的 index.html 为「单文件完整版」（与上级目录中「企业任务系统-浏览器直接打开.html」同源，
+部署前请将最新版复制为 index.html，见文末「同步」）。
+
+访问者无需安装软件，用 Chrome / Edge / Safari 等打开你的公网地址即可。
+打开后需先「注册 / 登录」：任务与项目数据按账号存在各自浏览器（localStorage），不同账号数据隔离；仍非服务器端多人在线协作。
+换电脑或清空站点数据会丢失该浏览器下对应账号的本地数据。
+
+若需要多人共用同一套服务器数据与账号权限，请使用上级目录的 task-ops（Next.js）并配置数据库。
+
+推荐部署方式（任选其一）
+------------------------
+
+【一】Vercel（简单，HTTPS + CDN）
+  1. 注册 https://vercel.com （可用 GitHub 登录）
+  2. New Project → Import 本仓库，Root Directory 选 task-ops-static
+     或在本目录执行：npx vercel
+  3. 部署完成后得到：https://你的项目名.vercel.app
+
+【二】Netlify
+  1. 注册 https://app.netlify.com
+  2. 「Add new site」→「Deploy manually」
+  3. 将 task-ops-static 文件夹整体拖入
+  4. 得到 https://随机名.netlify.app（可在后台改子域名）
+
+【三】Cloudflare Pages
+  1. Pages → Create project → 上传本文件夹或连接 Git
+  2. Build：None；Output directory：/
+
+【四】GitHub Pages
+  1. 仓库 Settings → Pages → 选分支与目录（若站点在子路径 /repo/，本应用使用 # 路由，一般可直接用）
+
+【五】任意对象存储 / 内网文件服务器
+  只要对外提供 HTTPS 静态文件服务，把 index.html 放在网站根目录即可。
+
+同步最新单文件到本目录（部署前执行）
+------------------------------------
+在项目根目录（cursor）终端执行：
+
+  cp "企业任务系统-浏览器直接打开.html" "task-ops-static/index.html"
+
+（Windows 可用资源管理器复制粘贴并改名为 index.html。）
+
+说明
+----
+· css/、js/ 为旧版拆分结构时遗留；当前以根目录 index.html 单文件为准，可忽略。
+· 分享链接给他人即可使用；提醒对方重要数据需自行备份（导出功能若未实现可复制 localStorage 或自行截图）。

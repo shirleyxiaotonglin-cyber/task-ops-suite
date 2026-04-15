@@ -1,0 +1,19 @@
+Task Ops 离线版 — 直接使用
+============================
+
+1. 用浏览器打开本文件夹里的 index.html
+   · 可以双击 index.html，或把 index.html 拖到浏览器窗口里
+   · 推荐使用 Chrome / Edge / Safari
+
+2. 无需安装 Node.js，无需联网（界面与数据都在本机）
+
+3. 演示登录
+   邮箱：admin@demo.com
+   密码：demo123
+   （manager@demo.com、member@demo.com 密码相同）
+
+4. 数据保存在当前浏览器的「本地存储」中；清除站点数据会重置演示数据
+
+5. 若双击后仍是空白页，请右键 index.html → 打开方式 → 选浏览器
+
+6. 若数据无法保存，请换用 Chrome 或 Edge 打开；不要用「无痕/隐私」模式
