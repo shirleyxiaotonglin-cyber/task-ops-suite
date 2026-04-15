@@ -44,7 +44,7 @@ export function ProjectWorkspace({ projectId, projectName }: { projectId: string
   const { data: membersData } = useQuery({
     queryKey: ["project-members", projectId],
     queryFn: async () => {
-      const r = await fetch(`/api/projects/${projectId}/members`);
+      const r = await fetch(`/api/projects/${projectId}/members`, { cache: "no-store" });
       if (!r.ok) throw new Error("failed");
       return r.json() as Promise<{
         members: {
@@ -54,6 +54,8 @@ export function ProjectWorkspace({ projectId, projectName }: { projectId: string
         }[];
       }>;
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const taskQueryUrl = useMemo(() => {
@@ -68,7 +70,7 @@ export function ProjectWorkspace({ projectId, projectName }: { projectId: string
   const { data, isLoading } = useQuery({
     queryKey: ["tasks", projectId, assigneeFilter, tagFilter, qFilter],
     queryFn: async () => {
-      const r = await fetch(taskQueryUrl);
+      const r = await fetch(taskQueryUrl, { cache: "no-store" });
       if (!r.ok) throw new Error("failed");
       return r.json() as Promise<{
         tasks: {
@@ -86,12 +88,14 @@ export function ProjectWorkspace({ projectId, projectName }: { projectId: string
         }[];
       }>;
     },
+    refetchInterval: 3000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: graphData, isLoading: graphLoading } = useQuery({
     queryKey: ["graph", projectId],
     queryFn: async () => {
-      const r = await fetch(`/api/projects/${projectId}/graph`);
+      const r = await fetch(`/api/projects/${projectId}/graph`, { cache: "no-store" });
       if (!r.ok) throw new Error("failed");
       return r.json() as Promise<{
         nodes: { id: string; label: string; status: TaskStatus }[];
@@ -99,6 +103,8 @@ export function ProjectWorkspace({ projectId, projectName }: { projectId: string
       }>;
     },
     enabled: view === "graph",
+    refetchInterval: view === "graph" ? 5000 : false,
+    refetchOnWindowFocus: true,
   });
 
   function setParam(key: string, value: string | null) {

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/api-context";
+import { parseProjectInviteToken } from "@/lib/project-invite";
 import { z } from "zod";
 
 const joinSchema = z.object({
-  projectId: z.string().min(1, "projectId required"),
+  projectId: z.string().min(1, "projectId required").optional(),
+  inviteToken: z.string().min(1, "inviteToken required").optional(),
 });
 
 export async function POST(req: Request) {
@@ -17,7 +19,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { projectId } = parsed.data;
+  let { projectId } = parsed.data;
+  if (!projectId && parsed.data.inviteToken) {
+    const decoded = parseProjectInviteToken(parsed.data.inviteToken);
+    if (!decoded) {
+      return NextResponse.json({ error: "Invite link invalid or expired" }, { status: 400 });
+    }
+    projectId = decoded.projectId;
+  }
+  if (!projectId) {
+    return NextResponse.json({ error: "projectId required" }, { status: 400 });
+  }
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: { id: true, name: true, archived: true },

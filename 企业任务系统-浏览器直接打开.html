@@ -6,10 +6,10 @@
   <title>项目任务协作台 — 管项目、跟任务、看进度</title>
   <style>
     :root {
-      --bg: #f4f6f9;
+      --bg: radial-gradient(circle at 12% 16%, #eef4ff 0%, #f6f9ff 36%, #f3f6fb 100%);
       --sidebar: #ffffff;
-      --card: #ffffff;
-      --border: #e8ecf1;
+      --card: rgba(255, 255, 255, 0.95);
+      --border: #e2e8f0;
       --text: #0f172a;
       --muted: #64748b;
       --primary: #dc2626;
@@ -19,10 +19,10 @@
       --surface-muted: #f1f5f9;
       --danger: #b91c1c;
       --ok: #15803d;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-      --shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow: 0 12px 32px rgba(30, 41, 59, 0.08);
       --side-bg: linear-gradient(180deg, #b91c1c 0%, #991b1b 46%, #7f1d1d 100%);
       --side-border: #7f1d1d;
     }
@@ -44,7 +44,7 @@
       position: fixed; top: 0; left: 0; bottom: 0;
       max-height: 100vh; overflow: auto;
       border-radius: 0;
-      box-shadow: 8px 0 24px rgba(127, 29, 29, 0.22);
+      box-shadow: 8px 0 24px rgba(127, 29, 29, 0.3);
     }
     .side h1 {
       font-size: 0.875rem; margin: 0 0 0.85rem; padding: 0 0.45rem; color: #f8fafc;
@@ -128,6 +128,7 @@
     .card {
       background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
       padding: 1.05rem 1.2rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
     }
     h2 { font-size: 1.05rem; margin: 0 0 0.65rem; font-weight: 650; letter-spacing: -0.02em; color: var(--text); }
     h3 { font-size: 0.95rem; font-weight: 650; margin: 0.5rem 0 0.4rem; color: var(--text); letter-spacing: -0.01em; }
@@ -137,8 +138,8 @@
       background: #fff; color: var(--text); cursor: pointer; font-size: 13px;
       box-shadow: var(--shadow-sm); transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
     }
-    .btn:hover { border-color: #cbd5e1; background: #f8fafc; }
-    .btn-primary { background: var(--primary); border-color: transparent; color: #fff; box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25); }
+    .btn:hover { border-color: #fecaca; background: #fff7f7; }
+    .btn-primary { background: var(--primary); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(220, 38, 38, 0.28); }
     .btn-primary:hover { background: var(--primary-hover); border-color: transparent; color: #fff; }
     .btn-sm { padding: 0.28rem 0.55rem; font-size: 12px; border-radius: 6px; }
     .input, select, textarea {
@@ -146,7 +147,7 @@
       background: #fafbfc; color: var(--text); font: inherit; transition: border-color 0.15s, box-shadow 0.15s;
     }
     .input:focus, select:focus, textarea:focus {
-      outline: none; border-color: #93c5fd; background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      outline: none; border-color: #f87171; background: #fff; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
     }
     textarea { min-height: 72px; resize: vertical; }
     .grid-2 { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
@@ -492,20 +493,24 @@
     }
     .auth-page {
       min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-      background: linear-gradient(165deg, #f8fafc 0%, #e2e8f0 100%);
+      background: radial-gradient(circle at 14% 20%, #fee2e2 0%, #fecaca 34%, #450a0a 100%);
     }
     .auth-card {
-      width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-      padding: 1.35rem 1.25rem; box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+      width: 100%; max-width: 420px; background: rgba(2, 6, 23, 0.92); border: 1px solid #1e293b; border-radius: 14px;
+      padding: 1.35rem 1.25rem; box-shadow: 0 18px 54px rgba(2, 6, 23, 0.35); color: #e2e8f0;
+      backdrop-filter: blur(8px);
     }
-    .auth-card h2 { margin: 0 0 0.25rem; font-size: 1.2rem; }
+    .auth-card h2 { margin: 0 0 0.25rem; font-size: 1.2rem; color: #f8fafc; }
+    .auth-card .muted { color: #94a3b8; }
     .auth-tabs { display: flex; gap: 0.35rem; margin-bottom: 1rem; }
     .auth-tab {
-      flex: 1; padding: 0.4rem; border-radius: 8px; border: 1px solid var(--border); background: #f8fafc;
-      color: var(--text); cursor: pointer; font: inherit; font-size: 13px;
+      flex: 1; padding: 0.45rem; border-radius: 10px; border: 1px solid #334155; background: #0f172a;
+      color: #cbd5e1; cursor: pointer; font: inherit; font-size: 13px;
     }
-    .auth-tab.active { border-color: var(--primary); background: rgba(220, 38, 38, 0.08); color: #991b1b; font-weight: 600; }
-    .auth-msg { font-size: 12px; color: var(--danger); min-height: 1.25rem; margin: 0 0 0.5rem; }
+    .auth-tab.active { border-color: #f87171; background: rgba(220, 38, 38, 0.22); color: #fee2e2; font-weight: 600; }
+    .auth-card .input { background: #020617; border-color: #1e293b; color: #e2e8f0; }
+    .auth-card .input:focus { border-color: #f87171; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2); }
+    .auth-msg { font-size: 12px; color: #fca5a5; min-height: 1.25rem; margin: 0 0 0.5rem; }
     .chain-linear .pipeline-v-title { font-size: 0.92rem; }
   </style>
 </head>
@@ -585,8 +590,8 @@
   }
 
   /**
-   * API 根地址。优先级：window.API_BASE → localStorage workgraph_api_base → 同主机 :3780 启发式。
-   * 静态页在 5500 / 局域网 IP 时，若仍向当前端口请求 /api 会得到 404；task-server 默认监听 3780。
+   * API 根地址。优先级：window.API_BASE → localStorage workgraph_api_base →
+   * 公网静态站（task-ops-static.vercel.app）→ 同主机 :3780 启发式（本地 task-server）。
    */
   function apiBase() {
     if (typeof window.API_BASE === "string" && window.API_BASE.length) {
@@ -600,6 +605,13 @@
       var pr = location.protocol;
       if (pr !== "http:" && pr !== "https:") return "";
       var h = location.hostname;
+      if (h === "task-ops-static.vercel.app") {
+        var syncDefault =
+          typeof window.WORKGRAPH_SYNC_API === "string" && window.WORKGRAPH_SYNC_API.trim()
+            ? window.WORKGRAPH_SYNC_API.trim().replace(/\/$/, "")
+            : "https://task-ops-ivory.vercel.app";
+        return syncDefault;
+      }
       var loopback = h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
       var lan = isPrivateLanHostname(h);
       if (!loopback && !lan) return "";

@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ProjectsPage() {
   const qc = useQueryClient();
@@ -29,12 +29,21 @@ export default function ProjectsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const r = await fetch("/api/projects");
+      const r = await fetch("/api/projects", { cache: "no-store" });
       if (!r.ok) throw new Error("failed");
       return r.json() as Promise<{
-        projects: { id: string; name: string; description: string | null; archived: boolean; _count: { tasks: number } }[];
+        projects: {
+          id: string;
+          name: string;
+          description: string | null;
+          archived: boolean;
+          _count: { tasks: number };
+          members?: { role: string; user?: { name?: string | null; email?: string | null } }[];
+        }[];
       }>;
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const create = useMutation({
@@ -56,11 +65,11 @@ export default function ProjectsPage() {
   });
 
   const join = useMutation({
-    mutationFn: async (projectId: string) => {
+    mutationFn: async (payload: { projectId?: string; inviteToken?: string }) => {
       const r = await fetch("/api/projects/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify(payload),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j?.error || "加入失败");
@@ -77,22 +86,93 @@ export default function ProjectsPage() {
     },
   });
 
+  useEffect(() => {
+    const inviteToken = new URLSearchParams(window.location.search).get("invite");
+    if (!inviteToken || join.isPending) return;
+    setJoinMsg("检测到邀请链接，正在加入项目...");
+    join.mutate({ inviteToken });
+    // no deps on join.mutate reference by design
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const copyInvite = useMutation({
+    mutationFn: async (projectId: string) => {
+      const r = await fetch(`/api/projects/${projectId}/invite`);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j?.inviteUrl) throw new Error(j?.error || "生成邀请链接失败");
+      return j as { inviteUrl: string };
+    },
+    onSuccess: async ({ inviteUrl }) => {
+      await navigator.clipboard.writeText(inviteUrl);
+      setJoinMsg("邀请链接已复制，可发给其他账号加入同一项目");
+    },
+    onError: (e) => {
+      setJoinMsg(e instanceof Error ? e.message : "生成邀请链接失败");
+    },
+  });
+
   if (isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">加载项目…</div>;
   }
 
   const projects = data?.projects ?? [];
+  const joinByInput = (raw: string) => {
+    const v = raw.trim();
+    if (!v) return;
+    setJoinMsg(null);
+    if (v.startsWith("http://") || v.startsWith("https://")) {
+      try {
+        const token = new URL(v).searchParams.get("invite");
+        if (token) {
+          join.mutate({ inviteToken: token });
+          return;
+        }
+      } catch {}
+    }
+    const matched = projects.find((p) => p.id === v || p.name === v);
+    join.mutate({ projectId: matched?.id ?? v });
+  };
 
   return (
-    <div className="mx-auto max-w-[1200px] space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">项目</h1>
-          <p className="text-sm text-muted-foreground">创建、进入项目或管理成员</p>
-        </div>
+    <div className="mx-auto max-w-[1200px] space-y-4 p-6">
+      <div className="rounded-xl border bg-card p-4">
+        <h1 className="text-xl font-semibold">项目</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          上方管理项目；向下可查看项目列表。风格已按你原来的网页布局还原。
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">加入项目</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            输入项目 ID 或完整项目名称；也可以直接粘贴邀请链接。
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              className="w-full max-w-md"
+              placeholder="项目 ID / 名称 / 邀请链接"
+              value={joinId}
+              onChange={(e) => setJoinId(e.target.value)}
+            />
+            <Button
+              variant="default"
+              disabled={!joinId.trim() || join.isPending}
+              onClick={() => joinByInput(joinId)}
+            >
+              {join.isPending ? "加入中..." : "加入并打开"}
+            </Button>
+          </div>
+          {joinMsg ? <p className="text-sm text-muted-foreground">{joinMsg}</p> : null}
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-wrap gap-2">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>创建项目</Button>
+            <Button>+ 新建项目</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -113,56 +193,78 @@ export default function ProjectsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        <Button variant="outline" disabled>
+          + 串联项目（待接入）
+        </Button>
       </div>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">加入项目（跨设备）</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              className="w-full max-w-sm"
-              placeholder="输入项目 ID"
-              value={joinId}
-              onChange={(e) => setJoinId(e.target.value)}
-            />
-            <Button
-              variant="secondary"
-              disabled={!joinId.trim() || join.isPending}
-              onClick={() => {
-                setJoinMsg(null);
-                join.mutate(joinId.trim());
-              }}
-            >
-              {join.isPending ? "加入中..." : "加入并打开"}
-            </Button>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-left">
+                <tr className="border-b">
+                  <th className="px-4 py-3 font-medium">名称</th>
+                  <th className="px-4 py-3 font-medium">负责人 / 成员</th>
+                  <th className="px-4 py-3 font-medium">项目 ID</th>
+                  <th className="px-4 py-3 font-medium">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-muted-foreground">
+                      暂无项目，请点上方「+ 新建项目」。
+                    </td>
+                  </tr>
+                ) : null}
+                {projects.map((p) => {
+                  const owner =
+                    p.members?.find((m) => m.role === "ADMIN")?.user?.name ||
+                    p.members?.[0]?.user?.name ||
+                    p.members?.find((m) => m.role === "ADMIN")?.user?.email ||
+                    "—";
+                  const memberCount = p.members?.length ?? 0;
+                  return (
+                    <tr key={p.id} className="border-b align-top">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{p.name}</div>
+                        {p.archived ? (
+                          <span className="mt-1 inline-block rounded border px-2 py-0.5 text-xs text-muted-foreground">
+                            已归档
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {owner} / {memberCount} 人
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.id}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Button asChild size="sm">
+                            <Link href={`/project/${p.id}`}>打开</Link>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={copyInvite.isPending}
+                            onClick={() => copyInvite.mutate(p.id)}
+                          >
+                            复制分享链接
+                          </Button>
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/projects/${p.id}/settings`}>编辑</Link>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          {joinMsg ? <p className="text-sm text-muted-foreground">{joinMsg}</p> : null}
         </CardContent>
       </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {projects.map((p) => (
-          <Card key={p.id} className={p.archived ? "opacity-60" : ""}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{p.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p className="line-clamp-2">{p.description || "无描述"}</p>
-              <p className="text-xs">任务数：{p._count.tasks}</p>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="secondary">
-                  <Link href={`/project/${p.id}`}>进入工作区</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/projects/${p.id}/settings`}>成员与设置</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }

@@ -14,6 +14,12 @@ Task Ops 离线版 — 直接使用
 
 4. 数据保存在当前浏览器的「本地存储」中；清除站点数据会重置演示数据
 
-5. 若双击后仍是空白页，请右键 index.html → 打开方式 → 选浏览器
+5. 部署在 https://task-ops-static.vercel.app 时，默认会把数据同步到后端
+   https://task-ops-ivory.vercel.app（需在该项目执行数据库迁移并配置 AUTH_SECRET）。
+   若你的同步 API 地址不同，可在页面控制台执行：
+   localStorage.setItem("workgraph_api_base","https://你的API根地址")
+   或设置 window.WORKGRAPH_SYNC_API 后刷新。
 
-6. 若数据无法保存，请换用 Chrome 或 Edge 打开；不要用「无痕/隐私」模式
+6. 若双击后仍是空白页，请右键 index.html → 打开方式 → 选浏览器
+
+7. 若数据无法保存，请换用 Chrome 或 Edge 打开；不要用「无痕/隐私」模式

@@ -282,3 +282,13 @@ model AiReportCache {
   payload   Json
   createdAt DateTime @default(now())
 }
+
+/// 静态页「企业任务系统」跨设备同步：用户名 + 整份 state JSON（与 task-server 行为对齐）
+model WorkgraphAccount {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  state        Json?    @db.JsonB
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

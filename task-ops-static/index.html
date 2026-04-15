@@ -585,8 +585,8 @@
   }
 
   /**
-   * API 根地址。优先级：window.API_BASE → localStorage workgraph_api_base → 同主机 :3780 启发式。
-   * 静态页在 5500 / 局域网 IP 时，若仍向当前端口请求 /api 会得到 404；task-server 默认监听 3780。
+   * API 根地址。优先级：window.API_BASE → localStorage workgraph_api_base →
+   * 公网静态站（task-ops-static.vercel.app）→ 同主机 :3780 启发式（本地 task-server）。
    */
   function apiBase() {
     if (typeof window.API_BASE === "string" && window.API_BASE.length) {
@@ -600,6 +600,13 @@
       var pr = location.protocol;
       if (pr !== "http:" && pr !== "https:") return "";
       var h = location.hostname;
+      if (h === "task-ops-static.vercel.app") {
+        var syncDefault =
+          typeof window.WORKGRAPH_SYNC_API === "string" && window.WORKGRAPH_SYNC_API.trim()
+            ? window.WORKGRAPH_SYNC_API.trim().replace(/\/$/, "")
+            : "https://task-ops-ivory.vercel.app";
+        return syncDefault;
+      }
       var loopback = h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
       var lan = isPrivateLanHostname(h);
       if (!loopback && !lan) return "";

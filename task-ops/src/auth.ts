@@ -3,7 +3,44 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import type { Adapter } from "next-auth/adapters";
+import { GlobalRole } from "@prisma/client";
 import { prisma } from "@/lib/db";
+
+/**
+ * Vercel 上若误把本地 .env 里的 AUTH_URL=http://localhost:3000 配进环境变量，
+ * 登录成功后会跳转到本机 3000 端口（用户截图 ERR_CONNECTION_REFUSED）。
+ * 去掉错误地址后由 trustHost + 实际请求的 Host 决定站点根地址。
+ */
+if (process.env.VERCEL) {
+  const isLocalhostUrl = (u: string | undefined) =>
+    !!u && (u.includes("localhost") || u.includes("127.0.0.1"));
+  if (isLocalhostUrl(process.env.AUTH_URL)) {
+    delete process.env.AUTH_URL;
+  }
+  if (isLocalhostUrl(process.env.NEXTAUTH_URL)) {
+    delete process.env.NEXTAUTH_URL;
+  }
+}
+
+/** 线上若未执行 `prisma db seed`，演示账号不存在会导致无法登录；匹配演示凭据时 upsert 用户并写入密码（可用环境变量关闭或改凭据）。 */
+async function syncDemoUserIfCredentialsMatch(email: string, plainPassword: string) {
+  if (process.env.ENABLE_DEMO_BOOTSTRAP === "false") return;
+  const demoEmail = (process.env.DEMO_EMAIL ?? "admin@demo.com").toLowerCase().trim();
+  const demoPass = process.env.DEMO_PASSWORD ?? "demo123";
+  if (email !== demoEmail || plainPassword !== demoPass) return;
+  const passwordHash = await bcrypt.hash(demoPass, 10);
+  await prisma.user.upsert({
+    where: { email: demoEmail },
+    update: { passwordHash },
+    create: {
+      email: demoEmail,
+      name: "演示管理员",
+      passwordHash,
+      globalRole: GlobalRole.ADMIN,
+      aiPermissionLevel: 3,
+    },
+  });
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -19,11 +56,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        const email = String(credentials.email).toLowerCase().trim();
+        const password = String(credentials.password);
+
+        await syncDemoUserIfCredentialsMatch(email, password);
+
         const user = await prisma.user.findUnique({
-          where: { email: String(credentials.email).toLowerCase().trim() },
+          where: { email },
         });
+
         if (!user?.passwordHash) return null;
-        const ok = await bcrypt.compare(String(credentials.password), user.passwordHash);
+        const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
         return {
           id: user.id,
@@ -39,7 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.email = user.email;
+        token.email = user.email ?? undefined;
         token.globalRole = (user as { globalRole?: string }).globalRole;
       }
       if (trigger === "update" && session?.name) {

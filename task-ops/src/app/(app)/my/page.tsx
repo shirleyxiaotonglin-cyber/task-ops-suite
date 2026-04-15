@@ -49,7 +49,7 @@ export default function MyTasksPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["me-tasks"],
     queryFn: async () => {
-      const r = await fetch("/api/me/tasks");
+      const r = await fetch("/api/me/tasks", { cache: "no-store" });
       if (!r.ok) throw new Error("failed");
       return r.json() as Promise<{
         created: TaskRow[];
@@ -60,6 +60,8 @@ export default function MyTasksPage() {
         overdue: TaskRow[];
       }>;
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   if (isLoading || !data) {
