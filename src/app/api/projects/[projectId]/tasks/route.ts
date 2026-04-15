@@ -4,7 +4,7 @@ import { requireUser, getProjectRole } from "@/lib/api-context";
 import { taskVisibilityWhere } from "@/lib/task-access";
 import { logTaskHistory } from "@/lib/history";
 import { z } from "zod";
-import { TaskPriority, TaskStatus } from "@prisma/client";
+import { Prisma, TaskPriority, TaskStatus } from "@prisma/client";
 
 const createSchema = z.object({
   title: z.string().min(1).max(500),
@@ -57,7 +57,7 @@ export async function GET(
     : null;
   const tagFilter = tag ? { tags: { has: tag } } : null;
 
-  const where: Parameters<typeof prisma.task.findMany>[0]["where"] = {
+  const where: Prisma.TaskWhereInput = {
     AND: [
       visibility,
       ...(status ? [{ status }] : []),
